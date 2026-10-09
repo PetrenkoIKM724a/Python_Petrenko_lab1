@@ -1,0 +1,115 @@
+# Програма для аналізу температурних показів за день
+
+print("=== Аналіз температурних показів за день ===")
+print("Введіть до 24 значень температур (через пробіл):")
+
+# Введення температур користувачем
+temp_input = input("Температури: ").strip()
+
+# Перевірка кількості значень
+if not temp_input:
+    print("Помилка: введено пустий рядок (0 показів).")
+    exit()
+
+temp_str_list = temp_input.split()
+if len(temp_str_list) > 24:
+    print("Помилка: загальна кількість показів перевищує 24.")
+    exit()
+
+# Створення та наповнення списку для числових значень показів температур
+temperatures = []
+for t_str in temp_str_list:
+    try:
+        t = float(t_str)
+        if -40 <= t <= 40:
+            temperatures.append(t)
+        else:
+            print(f"Помилка: температура {t} виходить за межі допустимого діапазону (-40..40).")
+            exit()
+    except ValueError:
+        print(f"Помилка: значення '{t_str}' неможливо перетворити на число.")
+        exit()
+
+# Перевірка, чи додались у список хоч якісь дані
+if len(temperatures) < 2:
+    print("Помилка: введено замало даних для аналізу. Потрібно хоча б два значення.")
+    exit()
+
+# Введення часових міток
+print("\nВведіть часові мітки для кожного показу (у форматі 'година:хвилина') через пробіл:")
+time_input = input("Мітки часу: ").strip()
+time_str_list = time_input.split()
+
+# Перевірка формату часу
+for time_str in time_str_list:
+    parts = time_str.split(':')
+    if len(parts) != 2:
+        print(f"Помилка: невірний формат часу '{time_str}'. Очікується формат 'година:хвилина'.")
+        exit()
+    try:
+        hh = int(parts[0])
+        mm = int(parts[1])
+        if not (0 <= hh <= 23 and 0 <= mm <= 59):
+            print(f"Помилка: некоректне значення годин або хвилин у мітці '{time_str}'.")
+            exit()
+    except ValueError:
+        print(f"Помилка: мітка часу '{time_str}' містить недопустимі символи.")
+        exit()
+
+# Перевірка кількості міток
+if len(time_str_list) != len(temperatures):
+    print("Помилка: кількість міток часу не збігається з кількістю показників температури.")
+    exit()
+
+# Створення словника {час: температура, час: температура, ...}
+temp_data = {}
+for i in range(len(time_str_list)):
+    temp_data[time_str_list[i]] = temperatures[i]
+
+# === Обчислення характеристик через словник з даними ===
+times = list(temp_data.keys())
+temps = list(temp_data.values())
+
+# Розрахунок статистичних параметрів
+avg_temp = sum(temps) / len(temps)
+min_temp = min(temps)
+max_temp = max(temps)
+
+pos_count = 0
+neg_count = 0
+for t in temps:
+    if t > 0:
+        pos_count += 1
+    elif t < 0:
+        neg_count += 1
+
+# Виявлення різких змін
+sharp_changes = []
+for i in range(len(temps) - 1):
+    diff = abs(temps[i+1] - temps[i])
+    if diff > 7:
+        sharp_changes.append((times[i], times[i+1], diff))
+
+# === Виведення результатів ===
+print("\n=== РЕЗУЛЬТАТ АНАЛІЗУ ===")
+print("Температурні дані (час → температура):")
+for time_k, temp_v in temp_data.items():
+    # Форматування для красивого вирівнювання як у прикладі
+    print(f"   {time_k} → {temp_v:>6.1f} °C")
+
+print(f"\nЗагальна кількість вимірювань: {len(temps)}")
+print(f"Середня температура: {avg_temp:.2f} °C")
+print(f"Максимальна температура: {max_temp:.1f} °C")
+print(f"Мінімальна температура: {min_temp:.1f} °C")
+print(f"Кількість додатних температур: {pos_count}")
+print(f"Кількість від’ємних температур: {neg_count}")
+
+# Виведення різких змін
+if sharp_changes:
+    print("\n[!] Виявлено різкі зміни температури (> 7°):")
+    for change in sharp_changes:
+        print(f"  між {change[0]} та {change[1]}: зміна на {change[2]:.1f}°C")
+else:
+    print("\n[!] Різких змін температури не виявлено.")
+
+print("\n=== Кінець аналізу ===")
